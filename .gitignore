@@ -1,3 +1,17 @@
+myparser.ml
+myparser.mli
+mylexer.ml
+bin/
+oUnit-*
+.omakedb*
+*.omc
+*.opt
+*.run
+test/test
+
+# Created by https://www.gitignore.io/api/ocaml
+
+### OCaml ###
 *.annot
 *.cmo
 *.cma
@@ -18,3 +32,5 @@ _build/
 # oasis generated files
 setup.data
 setup.log
+
+# End of https://www.gitignore.io/api/ocaml

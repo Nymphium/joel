@@ -1,0 +1,8 @@
+open build/OCaml
+
+DefineCommandVars()
+.PHONY: clean
+.SUBDIRS: .
+
+clean:
+    rm -f *.omc .omakedb .omakedb.lock

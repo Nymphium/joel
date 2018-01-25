@@ -1,0 +1,6 @@
+.PHONY: clean
+.SUBDIRS: lib parsing test
+
+clean:
+	rm -f *.omc .omakedb .omakedb.lock
+

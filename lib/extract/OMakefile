@@ -1,0 +1,39 @@
+LIBRARY = extract
+
+SOURCE_ROOT_DIRECTORY = .
+
+USE_OCAMLFIND  = true
+BYTE_ENABLED   = not $(OCAMLOPT_EXISTS)
+NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
+
+OCAMLFLAGS              +=
+OCAMLCFLAGS             +=
+OCAMLOPTFLAGS           +=
+OCAML_BYTE_LINK_FLAGS   +=
+OCAML_NATIVE_LINK_FLAGS +=
+# OCAML_LIBS              += $(addprefix $(ROOT)/lib, /syntax /common/common /typing/typing)
+OCAML_LIB_FLAGS         +=
+OCAML_CLIBS             +=
+OCAML_OTHER_LIBS        +=
+OCAMLINCLUDES           += $(addprefix $(ROOT)/lib, /. /common /typing)
+
+FILES[] =
+
+OCAML_GENERATED_FILES[] =
+if $(file-exists lexer.mll)
+    OCAML_GENERATED_FILES = lexer.ml $(OCAML_GENERATED_FILES)
+    export
+if $(file-exists parser.mly)
+    OCAML_GENERATED_FILES = parser.mli parser.ml $(OCAML_GENERATED_FILES)
+    export
+FILES += $(removesuffix $(OCAML_GENERATED_FILES))
+FILES += $(removesuffix $(filter %.ml, $(ls $(SOURCE_ROOT_DIRECTORY))))
+
+.PHONY: clean build
+.DEFAULT: build
+
+build: $(OCamlLibrary $(LIBRARY), $(FILES))
+
+clean:
+    $(RM) *.cmx *.cmxa *.cmo *.cmi *.o *.cma *.a *.run *.annot *.out *~ \
+        $(OCAML_GENERATED_FILES)

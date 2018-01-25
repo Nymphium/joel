@@ -1,0 +1,76 @@
+if $(not $(OCAMLFIND_EXISTS))
+    eprintln(You need to install ocamlfind and run "omake --configure")
+    exit 1
+
+PROGRAM = benchmark
+
+SOURCE_ROOT_DIRECTORY = .
+
+USE_OCAMLFIND  = true
+BYTE_ENABLED   = true
+NATIVE_ENABLED = false
+
+OCAMLPACKS[]             = oUnit compiler-libs compiler-libs.toplevel core core_bench
+OCAMLFLAGS              += -thread -annot
+OCAMLCFLAGS             +=
+OCAMLOPTFLAGS           +=
+OCAML_LINK_FLAGS        +=
+OCAML_BYTE_LINK_FLAGS   +=
+OCAML_NATIVE_LINK_FLAGS +=
+OCAML_LIBS              += $(addprefix $(ROOT), \
+							   $(addprefix /lib, /common/common /typing/typing \
+								   $(addprefix /compiler, \
+									   /computils \
+										   $(addprefix /joel, /joel /joel_opts)\
+										   $(addprefix /cps, /cps /cps_opts) \
+									   /compiler) \
+								   /extract/extract) \
+							   /parsing/myparsing /test/testutils)
+OCAML_CLIBS             +=
+OCAML_OTHER_LIBS        +=
+OCAML_LIB_FLAGS         +=
+OCAMLINCLUDES           += $(addprefix $(ROOT), $(addprefix /lib, /. /common /typing /compiler /extract) /parsing /test)
+
+FILES[] =
+
+OCAML_GENERATED_FILES[] =
+if $(file-exists lexer.mll)
+    OCAML_GENERATED_FILES = lexer.ml $(OCAML_GENERATED_FILES)
+    export
+if $(file-exists parser.mly)
+    OCAML_GENERATED_FILES = parser.mli parser.ml $(OCAML_GENERATED_FILES)
+    export
+FILES += $(removesuffix $(OCAML_GENERATED_FILES))
+FILES += $(removesuffix $(filter %.ml, $(ls $(SOURCE_ROOT_DIRECTORY))))
+
+###
+
+BENCH_PARAMS = -clear-column -fork -no-compactions -ascii
+FULL_BENCH = ./$(PROGRAM) time $(BENCH_PARAMS) -quota 40
+
+PROCCONT = proc
+
+.PHONY: plot $(PROCCONT).txt bench bench_mini build clean
+.DEFAULT: bench
+
+plot: $(PROCCONT).txt
+	ruby processing.rb < $(PROCCONT).txt > $(PROCCONT).tex
+
+$(PROCCONT).txt: build
+	date
+	$(FULL_BENCH) | tee $(PROCCONT).txt
+
+bench: build
+	date
+	$(FULL_BENCH)
+
+bench_mini: build
+	date
+	./$(PROGRAM) time $(BENCH_PARAMS) -quota 1
+
+build: $(OCamlProgram $(PROGRAM), $(FILES))
+
+clean:
+    $(RM) *.cmx *.cmxa *.cmo *.cmi *.o *.cma *.a *.run *.annot *.out *~ \
+        $(PROGRAM) $(PROGRAM).opt $(OCAML_GENERATED_FILES) \
+		oUnit-*.{log,cache}

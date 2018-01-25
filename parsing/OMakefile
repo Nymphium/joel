@@ -1,0 +1,38 @@
+LIBRARY = myparsing
+
+SOURCE_ROOT_DIRECTORY = .
+
+MENHIR_ENABLED = true
+MENHIR_FLAGS   = --infer
+
+USE_OCAMLFIND  = true
+BYTE_ENABLED   = not $(OCAMLOPT_EXISTS)
+NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
+
+OCAMLFLAGS              += -thread -annot
+OCAMLCFLAGS             +=
+OCAMLOPTFLAGS           +=
+OCAML_BYTE_LINK_FLAGS   +=
+OCAML_NATIVE_LINK_FLAGS +=
+OCAML_LIBS              +=
+OCAML_LIB_FLAGS         +=
+OCAML_CLIBS             +=
+OCAML_OTHER_LIBS        +=
+OCAMLINCLUDES           += $(addprefix $(ROOT)/lib, /. /common)
+
+FILES[] =
+
+OCAML_GENERATED_FILES[] =
+OCAML_GENERATED_FILES = mylexer.ml $(OCAML_GENERATED_FILES)
+OCAML_GENERATED_FILES = myparser.mli myparser.ml $(OCAML_GENERATED_FILES)
+FILES += $(removesuffix $(OCAML_GENERATED_FILES))
+FILES += $(removesuffix $(filter %.ml, $(ls $(SOURCE_ROOT_DIRECTORY))))
+
+.PHONY: clean build
+.DEFAULT: build
+
+build: $(OCamlLibrary $(LIBRARY), $(FILES))
+
+clean:
+    $(RM) *.cmx *.cmxa *.cmo *.cmi *.o *.cma *.a *.run *.annot *.out *~ \
+        $(OCAML_GENERATED_FILES)

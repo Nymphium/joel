@@ -1,0 +1,60 @@
+if $(not $(OCAMLFIND_EXISTS))
+    eprintln(You need to install ocamlfind and run "omake --configure")
+    exit 1
+
+PROGRAM = test
+UTILS = testutils
+
+SOURCE_ROOT_DIRECTORY = .
+
+USE_OCAMLFIND  = true
+BYTE_ENABLED   = true
+NATIVE_ENABLED = false
+
+OCAMLPACKS[]             = oUnit compiler-libs compiler-libs.toplevel
+OCAMLFLAGS              += -thread -annot
+OCAMLCFLAGS             +=
+OCAMLOPTFLAGS           +=
+OCAML_LINK_FLAGS        +=
+OCAML_BYTE_LINK_FLAGS   +=
+OCAML_NATIVE_LINK_FLAGS +=
+OCAML_LIBS              += $(addprefix $(ROOT), \
+							   $(addprefix /lib, /common/common /typing/typing \
+								   $(addprefix /compiler, \
+									   /computils \
+										   $(addprefix /joel, /joel /joel_opts)\
+										   $(addprefix /cps, /cps /cps_opts) \
+									   /compiler) \
+								   /extract/extract) \
+							   /parsing/myparsing)
+OCAML_CLIBS             +=
+OCAML_OTHER_LIBS        +=
+OCAML_LIB_FLAGS         +=
+OCAMLINCLUDES           += $(addprefix $(ROOT), $(addprefix /lib, /. /common /typing /compiler /extract) /parsing)
+
+FILES[] =
+
+OCAML_GENERATED_FILES[] =
+if $(file-exists lexer.mll)
+    OCAML_GENERATED_FILES = lexer.ml $(OCAML_GENERATED_FILES)
+    export
+if $(file-exists parser.mly)
+    OCAML_GENERATED_FILES = parser.mli parser.ml $(OCAML_GENERATED_FILES)
+    export
+FILES += $(removesuffix $(OCAML_GENERATED_FILES))
+FILES += $(removesuffix $(filter %.ml, $(ls $(SOURCE_ROOT_DIRECTORY))))
+
+.SUBDIRS: benchmark
+.PHONY: build buildutil clean check
+.DEFAULT: check
+
+check: build
+    ./$(PROGRAM) -runner sequential -chooser failfirst
+
+build: $(OCamlProgram $(PROGRAM), $(FILES))
+buildutil: $(OCamlLibrary $(UTILS), $(FILES))
+
+clean:
+    $(RM) *.cmx *.cmxa *.cmo *.cmi *.o *.cma *.a *.run *.annot *.out *~ \
+        $(PROGRAM) $(PROGRAM).opt $(OCAML_GENERATED_FILES) \
+		oUnit-*.{log,cache}
