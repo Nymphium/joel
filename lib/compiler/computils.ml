@@ -20,8 +20,8 @@ let rec valuate = function
 let rec is_valuable = function
   | Data(_, args) -> List.for_all is_valuable args
   | Lamb(_, _) | True | False | Unit | Int _ | Var _ -> true
-  | Add(e1, e2) | Sub(e1, e2) | Div(e1, e2) | Mul(e1, e2) | Lt(e1, e2)
-    when is_valuable e1 && is_valuable e2 -> true
+  (* | Add(e1, e2) | Sub(e1, e2) | Div(e1, e2) | Mul(e1, e2) | Lt(e1, e2) *)
+    (* when is_valuable e1 && is_valuable e2 -> true *)
   | _ -> false
 
 let rec termize = function

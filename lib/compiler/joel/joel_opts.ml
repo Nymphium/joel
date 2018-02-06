@@ -94,15 +94,14 @@ let jdrop e =
 
 let case e =
   match e with
-  | Match(c, alt) when is_valuable c ->
+  | Match(c, alt) ->
     begin match c with
       | Data(kstr, args) ->
         let (_, args', u) = find (fun (kstr', _, _) -> kstr' = kstr) alt in
         fold_right2 (fun a x e' ->
             let x' = fresh_var x in
             Let(x', a, esubs e' x @@ Var x')) args args' u
-      | Var _ -> e
-      | _ -> failwith @@ Printf.sprintf "type error %s" @@ rawstring_of_term c
+      | _ ->  e
     end
   | MatchVal(v, valt) ->
     begin match find_opt (function (AVar x, _) when x <> "_" -> true | (va, _) -> compare_v_va_tag (v, va)) valt with
