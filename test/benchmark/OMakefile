@@ -3,15 +3,17 @@ if $(not $(OCAMLFIND_EXISTS))
     exit 1
 
 PROGRAM = benchmark
+GENBENCH = genbench
+GENERATED_TESTS = benchtests
 
 SOURCE_ROOT_DIRECTORY = .
 
 USE_OCAMLFIND  = true
-BYTE_ENABLED   = true
-NATIVE_ENABLED = false
+BYTE_ENABLED   = not $(OCAMLOPT_EXISTS)
+NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 
-OCAMLPACKS[]             = oUnit compiler-libs compiler-libs.toplevel core core_bench
-OCAMLFLAGS              += -thread -annot
+OCAMLPACKS[]             = core
+OCAMLFLAGS              +=
 OCAMLCFLAGS             +=
 OCAMLOPTFLAGS           +=
 OCAML_LINK_FLAGS        +=
@@ -43,14 +45,13 @@ if $(file-exists parser.mly)
 FILES += $(removesuffix $(OCAML_GENERATED_FILES))
 FILES += $(removesuffix $(filter %.ml, $(ls $(SOURCE_ROOT_DIRECTORY))))
 
-###
+FILES = $(set-diff $(FILES), benchinit)
 
-BENCH_PARAMS = -clear-column -fork -no-compactions -ascii
-FULL_BENCH = ./$(PROGRAM) time $(BENCH_PARAMS) -quota 40
+###
 
 PROCCONT = proc
 
-.PHONY: plot $(PROCCONT).txt bench bench_mini build clean
+.PHONY: plot $(PROCCONT).txt bench bench_mini build build_genbench clean
 .DEFAULT: bench
 
 plot: $(PROCCONT).txt
@@ -58,19 +59,25 @@ plot: $(PROCCONT).txt
 
 $(PROCCONT).txt: build
 	date
-	$(FULL_BENCH) | tee $(PROCCONT).txt
+	./$(PROGRAM) | tee $(PROCCONT).txt
 
 bench: build
 	date
-	$(FULL_BENCH)
+	./$(PROGRAM)
 
 bench_mini: build
 	date
-	./$(PROGRAM) time $(BENCH_PARAMS) -quota 1
+	./$(PROGRAM)
 
-build: $(OCamlProgram $(PROGRAM), $(FILES))
+build: $(OCamlProgram $(PROGRAM), $(set-diff $(GENERATED_TESTS) $(FILES), $(GENBENCH)))
+
+$(GENERATED_TESTS).ml: build_genbench
+	./$(GENBENCH)
+
+build_genbench: $(OCamlProgram $(GENBENCH), $(set-diff $(FILES), $(PROGRAM) $(GENERATED_TESTS)))
 
 clean:
-    $(RM) *.cmx *.cmxa *.cmo *.cmi *.o *.cma *.a *.run *.annot *.out *~ \
-        $(PROGRAM) $(PROGRAM).opt $(OCAML_GENERATED_FILES) \
+    $(RM) *.cmx *.cmxa *.cmo *.cmi *.o *.cma *.a *.run *.opt *.annot *.out *~ \
+        $(PROGRAM) $(OCAML_GENERATED_FILES) \
+		$(GENERATED_TESTS).ml $(GENBENCH) \
 		oUnit-*.{log,cache}

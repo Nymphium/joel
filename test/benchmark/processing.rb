@@ -25,7 +25,7 @@ def process_benchresult stream # {{{
 
 		break if end_of_bench
 
-		results = line.match(/\s*(?<case>\S+)\s*\(\s*(?<lang>[a-z]+)\)\s*\(\s*(?<size>\d+)\)\s*(?<time>\d+\_?\d+)\.?\d+ms/)
+		results = line.match(/\s*(?<case>\S+)\s*\(\s*(?<lang>[a-z]+)\)\s*\(\s*(?<size>\d+)\)\s*(?<time>\d+\.?\d+)/)
 
 		if results
 			testcase = results[:case]
@@ -42,7 +42,7 @@ def process_benchresult stream # {{{
 			size = results[:size].to_i
 			time0 = results[:time].gsub("_", "")
 
-			time = time0.to_f * 0.001
+			time = time0.to_f
 
 			bench_result[testcase][results[:lang]].push [size, time]
 		end
@@ -116,13 +116,13 @@ end
 stream = STDIN
 
 # ignore header
-stream_ignore_while(stream, /%%%%%/)
-stream_ignore_while(stream, /^\s*-+\s+-+\s*$/)
+# stream_ignore_while(stream, /%%%%%/)
+stream_ignore_while(stream, /^\s*benchmark\s*\d+\s*tests\s*$/)
 ##
 bench_result = process_benchresult stream
 ##
 # ignore output
-stream_ignore_while(stream, /^\s*-+\s*$/)
+stream_ignore_while(stream, /^-*$/)
 ##
 size_result = process_codesize stream
 ## ignore for EOF
@@ -145,10 +145,6 @@ HEAD
 puts header
 
 latexenv "document" do
-	printf "\\newcommand{\\dotsize}{%f}\n", 0.1
-	# printf "\\newcommand{\\xscale}{%f}\n", X_SCALE
-	# printf "\\newcommand{\\yscale}{%f}\n", Y_SCALE
-
 	bench_result.each{|testcase, conts|
 		latexenv "figure", opt: "h" do
 			puts "\\centering"
@@ -157,38 +153,50 @@ latexenv "document" do
 					conts.each{|lang, times|
 
 						printf "\\addplot[%s, mark = *] coordinates {\n", lang
-						times.each{|xy|
+						times.each_with_index{|xy, i|
 							x, y = xy
-							printf "(%d, %.3f)\n", x, y
+							printf "(%d, %.8f)\n", x, y
+
+							if i == times.length - 1 then
+								puts "};"
+								plotlabel = <<-'LABEL'
+\addplot[nodes near coords, %s, point meta = explicit symbolic]  table[meta = label] {
+        x y label
+		%d %.8f %.8f
+    };
+								LABEL
+								printf plotlabel, lang, x, y, y
+							end
 						}
 
-						puts "};"
 						printf "\\addlegendentry{%s}\n", lang
 					}
 				end
 			end
-			printf "\\caption{%s}", testcase
+			printf "\\caption{%s}\n", testcase
 		end
 	}
 
-	size_result.each_with_index{|caseconts, i|
-		latexenv "figure", opt: "h" do
-			puts "\\centering"
-			testcase, conts = caseconts
+	latexenv "table", opt: "h" do
+		latexenv "tabular" do
+			puts "{r|c|c|c}"
+			puts " & coreml & joel & cps\\\\\\hline\n"
 
-			latexenv "tikzpicture", opt: "scale = 0.45" do
-				conts.each_with_index{|langsize, j|
-					lang, size = langsize
-					j = (j + (i * conts.length) + 1) * 3
-					sizex = mapto_codesize size
-					printf "\\draw[%s,fill] (%.2f, 0) rectangle (%.2f, %.2f);\n", lang, (j - 3), (j - 1), sizex
-					printf "\\node[above] at (%.2f, %.2f) {%d};\n", (j - 2), sizex, size
+			size_result.each_with_index{|caseconts, i|
+				testcase, conts = caseconts
+
+				printf testcase
+
+				conts.each{|_, size|
+					printf " & %s", size
 				}
-			end
 
-			printf "\\caption{%s}", testcase
+				if i != size_result.length - 1 then
+					puts "\\\\\\hline"
+				end
+			}
 		end
-	}
+	end
 end
 # }}}
 # }}}

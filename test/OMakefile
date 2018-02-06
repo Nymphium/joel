@@ -8,10 +8,10 @@ UTILS = testutils
 SOURCE_ROOT_DIRECTORY = .
 
 USE_OCAMLFIND  = true
-BYTE_ENABLED   = true
-NATIVE_ENABLED = false
+BYTE_ENABLED   = not $(OCAMLOPT_EXISTS)
+NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 
-OCAMLPACKS[]             = oUnit compiler-libs compiler-libs.toplevel
+OCAMLPACKS[]             = oUnit compiler-libs.common
 OCAMLFLAGS              += -thread -annot
 OCAMLCFLAGS             +=
 OCAMLOPTFLAGS           +=

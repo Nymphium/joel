@@ -2,3 +2,4 @@ proc.*
 benchmark
 result-*.txt
 script1
+benchtests.ml
