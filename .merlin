@@ -1,0 +1,9 @@
+B lib/**
+S lib/**
+B parsing/**
+S parsing/**
+B test/**
+S test/**
+PKG oUnit
+PKG compiler-libs.common
+PKG core
